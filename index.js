@@ -6,25 +6,30 @@ const extensionName = "hud-tracker";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
 const defaultSettings = {
-    enabled: false
+    enabled: false,
+    headerTemplate: "HUD Tracker",
+    contentTemplate: "Custom status goes here..."
 };
 
-// แก้ไขฟังก์ชัน injectHUD
+
+// 2. อัปเดตฟังก์ชัน injectHUD เพื่อใช้ข้อความจากการตั้งค่า
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
 
+    // ดึงข้อความมาใช้ (แปลงการขึ้นบรรทัดใหม่ใน textarea ให้เป็น <br> ใน HTML)
+    const headerText = extension_settings[extensionName].headerTemplate || "HUD Tracker";
+    const contentText = (extension_settings[extensionName].contentTemplate || "").replace(/\n/g, '<br>');
+
     $('.mes[is_user="false"] .mes_block').each(function() {
         if ($(this).find('.hud-tracker-container').length === 0) {
-            // โครงสร้าง HTML ใหม่ที่มีส่วน Header สำหรับกด และ Content ที่ซ่อนอยู่
             $(this).find('.mes_text').before(`
                 <div class="hud-tracker-container">
                     <div class="hud-tracker-header">
-                        <span>HUD Tracker</span>
+                        <span class="hud-tracker-header-text">${headerText}</span>
                         <i class="fa-solid fa-chevron-down hud-tracker-icon collapsed"></i>
                     </div>
                     <div class="hud-tracker-content collapsed">
-                        <p>✅ HUD Collapse system is working!</p>
-                        <p>เดี๋ยวเราจะเอาข้อมูลสถานะมาใส่ตรงนี้</p>
+                        ${contentText}
                     </div>
                 </div>
             `);
@@ -32,6 +37,21 @@ function injectHUD() {
     });
 }
 
+// 3. เพิ่มฟังก์ชันสำหรับบันทึก Template
+function onTemplateChange() {
+    extension_settings[extensionName].headerTemplate = $("#hud_tracker_header_template").val();
+    extension_settings[extensionName].contentTemplate = $("#hud_tracker_content_template").val();
+    saveSettingsDebounced();
+    console.log(`[${extensionName}] Templates saved`);
+
+    // อัปเดต HUD ที่แสดงอยู่บนหน้าจอทันที
+    $('.hud-tracker-container').each(function() {
+        $(this).find('.hud-tracker-header-text').text(extension_settings[extensionName].headerTemplate);
+        $(this).find('.hud-tracker-content').html(extension_settings[extensionName].contentTemplate.replace(/\n/g, '<br>'));
+    });
+}
+
+// 4. อัปเดตฟังก์ชัน loadSettings เพื่อโหลดข้อมูลลงในช่อง
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
 
@@ -40,6 +60,8 @@ async function loadSettings() {
     }
 
     $("#hud_tracker_enabled").prop("checked", extension_settings[extensionName].enabled);
+    $("#hud_tracker_header_template").val(extension_settings[extensionName].headerTemplate);
+    $("#hud_tracker_content_template").val(extension_settings[extensionName].contentTemplate);
 }
 
 function onCheckboxChange(event) {
@@ -79,6 +101,8 @@ jQuery(async () => {
 
         $("#hud_tracker_enabled").on("input", onCheckboxChange);
         $("#hud_tracker_test_button").on("click", onButtonClick);
+        $("#hud_tracker_header_template").on("input", onTemplateChange);
+        $("#hud_tracker_content_template").on("input", onTemplateChange);
 
         // เพิ่มส่วนนี้: ดักจับการคลิกที่ Header เพื่อพับ/กาง HUD
         $(document).on('click', '.hud-tracker-header', function() {
