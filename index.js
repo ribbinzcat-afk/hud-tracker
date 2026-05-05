@@ -12,12 +12,13 @@ const defaultSettings = {
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
 
-    // หาข้อความของ AI ทั้งหมด (is_user="false") ที่ยังไม่มี HUD
-    $('.mes[is_user="false"] .mes_text').each(function() {
+    // เปลี่ยนมาหาที่ .mes_block แทน
+    $('.mes[is_user="false"] .mes_block').each(function() {
+        // เช็คว่ามี HUD หรือยัง
         if ($(this).find('.hud-tracker-container').length === 0) {
-            // เปลี่ยนจาก append เป็น prepend เพื่อให้ไปอยู่ด้านบนสุด
-            // และเปลี่ยน margin-top เป็น margin-bottom เพื่อเว้นระยะจากข้อความด้านล่าง
-            $(this).prepend(`
+            // ใช้ .before() เพื่อแทรก HUD ไว้ "ก่อนหน้า" ตัวข้อความแชท
+            // วิธีนี้จะทำให้ HUD ไม่ถูกเขียนทับเวลา AI กำลังพิมพ์ข้อความใหม่
+            $(this).find('.mes_text').before(`
                 <div class="hud-tracker-container" style="border: 1px solid #888; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(0,0,0,0.1);">
                     <b>HUD Tracker</b>
                     <p>✅ HUD injection is working at the top!</p>
