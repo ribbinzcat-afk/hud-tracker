@@ -47,6 +47,7 @@ jQuery(async () => {
 
         // Bind checkbox event
         $("#hud_tracker_enabled").on("input", onCheckboxChange);
+        $("#hud_tracker_test_button").on("click", onButtonClick);
 
         // Load saved settings
         loadSettings();
