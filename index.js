@@ -9,19 +9,23 @@ const defaultSettings = {
     enabled: false
 };
 
+// แก้ไขฟังก์ชัน injectHUD
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
 
-    // เปลี่ยนมาหาที่ .mes_block แทน
     $('.mes[is_user="false"] .mes_block').each(function() {
-        // เช็คว่ามี HUD หรือยัง
         if ($(this).find('.hud-tracker-container').length === 0) {
-            // ใช้ .before() เพื่อแทรก HUD ไว้ "ก่อนหน้า" ตัวข้อความแชท
-            // วิธีนี้จะทำให้ HUD ไม่ถูกเขียนทับเวลา AI กำลังพิมพ์ข้อความใหม่
+            // โครงสร้าง HTML ใหม่ที่มีส่วน Header สำหรับกด และ Content ที่ซ่อนอยู่
             $(this).find('.mes_text').before(`
-                <div class="hud-tracker-container" style="border: 1px solid #888; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(0,0,0,0.1);">
-                    <b>HUD Tracker</b>
-                    <p>✅ HUD injection is working at the top!</p>
+                <div class="hud-tracker-container">
+                    <div class="hud-tracker-header">
+                        <span>HUD Tracker</span>
+                        <i class="fa-solid fa-chevron-down hud-tracker-icon collapsed"></i>
+                    </div>
+                    <div class="hud-tracker-content collapsed">
+                        <p>✅ HUD Collapse system is working!</p>
+                        <p>เดี๋ยวเราจะเอาข้อมูลสถานะมาใส่ตรงนี้</p>
+                    </div>
                 </div>
             `);
         }
@@ -75,6 +79,16 @@ jQuery(async () => {
 
         $("#hud_tracker_enabled").on("input", onCheckboxChange);
         $("#hud_tracker_test_button").on("click", onButtonClick);
+
+        // เพิ่มส่วนนี้: ดักจับการคลิกที่ Header เพื่อพับ/กาง HUD
+        $(document).on('click', '.hud-tracker-header', function() {
+            const container = $(this).closest('.hud-tracker-container');
+            const content = container.find('.hud-tracker-content');
+            const icon = container.find('.hud-tracker-icon');
+
+            content.toggleClass('collapsed');
+            icon.toggleClass('collapsed');
+        });
 
         loadSettings();
 
