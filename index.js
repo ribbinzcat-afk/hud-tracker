@@ -18,9 +18,59 @@ const defaultSettings = {
     }
 };
 
-// 5. อัปเดต injectHUD ให้ดึงข้อมูลจาก Preset ปัจจุบัน
+// เพิ่มฟังก์ชันนี้ไว้ด้านบนๆ สำหรับดักจับและซ่อนแท็กจาก AI
+function processAIResponse() {
+    if (!extension_settings[extensionName].enabled) return;
+
+    let needsUpdate = false;
+    const current = extension_settings[extensionName].currentPreset;
+    const preset = extension_settings[extensionName].presets[current];
+
+    // ค้นหาข้อความทั้งหมดของ AI
+    $('.mes[is_user="false"] .mes_text').each(function() {
+        let text = $(this).html();
+        let modified = false;
+
+        // ดักจับ <HUD_HEADER>...</HUD_HEADER>
+        const headerRegex = /<HUD_HEADER>([\s\S]*?)<\/HUD_HEADER>/g;
+        let headerMatch;
+        while ((headerMatch = headerRegex.exec(text)) !== null) {
+            preset.headerTemplate = headerMatch[1].trim();
+            text = text.replace(headerMatch[0], ''); // ลบแท็กออกจากหน้าจอ
+            modified = true;
+            needsUpdate = true;
+        }
+
+        // ดักจับ <HUD_CONTENT>...</HUD_CONTENT>
+        const contentRegex = /<HUD_CONTENT>([\s\S]*?)<\/HUD_CONTENT>/g;
+        let contentMatch;
+        while ((contentMatch = contentRegex.exec(text)) !== null) {
+            preset.contentTemplate = contentMatch[1].trim();
+            text = text.replace(contentMatch[0], ''); // ลบแท็กออกจากหน้าจอ
+            modified = true;
+            needsUpdate = true;
+        }
+
+        // ถ้ามีการดึงแท็กออก ให้เขียนข้อความใหม่ลงไปที่หน้าจอ
+        if (modified) {
+            $(this).html(text);
+        }
+    });
+
+    if (needsUpdate) {
+        saveSettingsDebounced();
+        loadCurrentPresetToUI();
+        updateActiveHUDs();
+        console.log(`[${extensionName}] Auto-updated from AI tags`);
+    }
+}
+
+// แก้ไขฟังก์ชัน injectHUD เล็กน้อย เพื่อให้มันทำงานร่วมกับ processAIResponse
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
+
+    // ประมวลผลข้อความเพื่อดึงแท็กออกก่อน
+    processAIResponse();
 
     const current = extension_settings[extensionName].currentPreset;
     const preset = extension_settings[extensionName].presets[current];
