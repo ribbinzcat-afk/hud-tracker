@@ -1,5 +1,6 @@
+// อัปเดตบรรทัด import ด้านบนสุด เพื่อดึง eventSource และ event_types มาใช้
 import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
-import { saveSettingsDebounced } from "../../../../script.js";
+import { saveSettingsDebounced, eventSource, event_types } from "../../../../script.js";
 
 const extensionName = "hud-tracker";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
@@ -7,6 +8,23 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const defaultSettings = {
     enabled: false
 };
+
+// ฟังก์ชันใหม่สำหรับแทรก HUD
+function injectHUD() {
+    if (!extension_settings[extensionName].enabled) return;
+
+    // หาข้อความของ AI ทั้งหมด (is_user="false") ที่ยังไม่มี HUD
+    $('.mes[is_user="false"] .mes_text').each(function() {
+        if ($(this).find('.hud-tracker-container').length === 0) {
+            $(this).append(`
+                <div class="hud-tracker-container" style="border: 1px solid #888; padding: 10px; margin-top: 10px; border-radius: 5px; background: rgba(0,0,0,0.1);">
+                    <b>HUD Tracker</b>
+                    <p>✅ HUD injection is working!</p>
+                </div>
+            `);
+        }
+    });
+}
 
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -23,9 +41,15 @@ function onCheckboxChange(event) {
     extension_settings[extensionName].enabled = value;
     saveSettingsDebounced();
     console.log(`[${extensionName}] Setting saved:`, value);
+
+    // เพิ่มส่วนนี้: อัปเดต HUD ทันทีเมื่อเปิด/ปิด
+    if (value) {
+        injectHUD();
+    } else {
+        $('.hud-tracker-container').remove();
+    }
 }
 
-// เพิ่มฟังก์ชันนี้ไว้ด้านบน (ก่อนถึง jQuery(async () => { ... }))
 function onButtonClick() {
     const isEnabled = extension_settings[extensionName].enabled;
     toastr.info(
@@ -35,9 +59,6 @@ function onButtonClick() {
     console.log(`[${extensionName}] Button clicked`);
 }
 
-// และในส่วนของ jQuery(async () => { ... }) ให้เพิ่มบรรทัดนี้ต่อท้าย $("#hud_tracker_enabled").on("input", onCheckboxChange);
-$("#hud_tracker_test_button").on("click", onButtonClick);
-
 jQuery(async () => {
     console.log(`[${extensionName}] Loading...`);
 
@@ -45,12 +66,15 @@ jQuery(async () => {
         const settingsHtml = await $.get(`${extensionFolderPath}/example.html`);
         $("#extensions_settings2").append(settingsHtml);
 
-        // Bind checkbox event
         $("#hud_tracker_enabled").on("input", onCheckboxChange);
         $("#hud_tracker_test_button").on("click", onButtonClick);
 
-        // Load saved settings
         loadSettings();
+
+        // เพิ่มส่วนนี้: ดักจับ Event ต่างๆ ของแชทเพื่อแทรก HUD
+        eventSource.on(event_types.CHAT_CHANGED, injectHUD);
+        eventSource.on(event_types.MESSAGE_RECEIVED, injectHUD);
+        eventSource.on(event_types.MESSAGE_SWIPED, injectHUD);
 
         console.log(`[${extensionName}] ✅ Loaded successfully`);
     } catch (error) {
