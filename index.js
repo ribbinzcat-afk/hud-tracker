@@ -25,6 +25,19 @@ function onCheckboxChange(event) {
     console.log(`[${extensionName}] Setting saved:`, value);
 }
 
+// เพิ่มฟังก์ชันนี้ไว้ด้านบน (ก่อนถึง jQuery(async () => { ... }))
+function onButtonClick() {
+    const isEnabled = extension_settings[extensionName].enabled;
+    toastr.info(
+        `Extension is ${isEnabled ? "enabled" : "disabled"}`,
+        "HUD Tracker"
+    );
+    console.log(`[${extensionName}] Button clicked`);
+}
+
+// และในส่วนของ jQuery(async () => { ... }) ให้เพิ่มบรรทัดนี้ต่อท้าย $("#hud_tracker_enabled").on("input", onCheckboxChange);
+$("#hud_tracker_test_button").on("click", onButtonClick);
+
 jQuery(async () => {
     console.log(`[${extensionName}] Loading...`);
 
