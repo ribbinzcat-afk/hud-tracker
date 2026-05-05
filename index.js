@@ -310,6 +310,22 @@ jQuery(async () => {
         $("#hud_tracker_import_preset_btn").on("click", () => $("#hud_tracker_import_file").click());
         $("#hud_tracker_import_file").on("change", onImportPreset);
 
+        // เพิ่มส่วนนี้: พยายามลงทะเบียน Prompt เข้าไปใน Context ของ AI
+        try {
+            // เช็คว่ามีระบบ registerExtensionPrompt หรือไม่ (SillyTavern 1.11+)
+            const extensionsModule = await import('../../../extensions.js');
+            if (extensionsModule.registerExtensionPrompt) {
+                extensionsModule.registerExtensionPrompt(extensionName, () => {
+                    if (!extension_settings[extensionName].enabled) return "";
+                    const current = extension_settings[extensionName].currentPreset;
+                    return extension_settings[extensionName].presets[current].promptTemplate || "";
+                });
+                console.log(`[${extensionName}] ✅ Prompt registered to Context`);
+            }
+        } catch (e) {
+            console.warn(`[${extensionName}] ⚠️ Could not register prompt automatically. You may need to copy the prompt to your Character's System Note manually.`, e);
+        }
+
         // เพิ่มส่วนนี้: ดักจับการคลิกที่ Header เพื่อพับ/กาง HUD
         $(document).on('click', '.hud-tracker-header', function() {
             const container = $(this).closest('.hud-tracker-container');
