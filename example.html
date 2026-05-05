@@ -9,12 +9,24 @@
                 <input id="hud_tracker_enabled" type="checkbox" />
                 <label for="hud_tracker_enabled">Enable HUD Tracker</label>
             </div>
-            <!-- เพิ่มส่วนนี้เข้าไป -->
+
+            <hr>
+
+            <!-- เพิ่มส่วนนี้สำหรับการ Custom ข้อความ -->
+            <div>
+                <label for="hud_tracker_header_template"><b>ส่วนที่แสดงผลตลอด (Header):</b></label>
+                <input id="hud_tracker_header_template" type="text" class="text_pole" style="width: 100%; margin-bottom: 10px;" placeholder="เช่น: HP: 100 | MP: 50" />
+            </div>
+            <div>
+                <label for="hud_tracker_content_template"><b>ส่วนที่ซ่อนไว้ (Collapse Content):</b></label>
+                <textarea id="hud_tracker_content_template" class="text_pole" rows="3" style="width: 100%; resize: vertical;" placeholder="เช่น: สถานะผิดปกติ: ไม่มี\nความสัมพันธ์: ระดับ 2"></textarea>
+            </div>
+            <!-- สิ้นสุดส่วนที่เพิ่ม -->
+
             <hr>
             <div>
                 <input id="hud_tracker_test_button" class="menu_button" type="submit" value="Test Button" />
             </div>
-            <!-- สิ้นสุดส่วนที่เพิ่ม -->
             <p><small>Toggle this and refresh - it should remember your choice.</small></p>
         </div>
     </div>
