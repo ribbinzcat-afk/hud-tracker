@@ -61,6 +61,11 @@ function onButtonClick() {
     console.log(`[${extensionName}] Button clicked`);
 }
 
+// เพิ่มฟังก์ชันนี้เพื่อหน่วงเวลารอให้หน้าจออัปเดตเสร็จก่อน
+function triggerInjectHUD() {
+    setTimeout(injectHUD, 100);
+}
+
 jQuery(async () => {
     console.log(`[${extensionName}] Loading...`);
 
@@ -73,12 +78,12 @@ jQuery(async () => {
 
         loadSettings();
 
-        // เพิ่มส่วนนี้: ดักจับ Event ต่างๆ ของแชทเพื่อแทรก HUD
-        eventSource.on(event_types.CHAT_CHANGED, injectHUD);
-        eventSource.on(event_types.MESSAGE_RECEIVED, injectHUD);
-        eventSource.on(event_types.MESSAGE_SWIPED, injectHUD);
-        eventSource.on(event_types.MESSAGE_UPDATED, injectHUD); // เพิ่มอันนี้
-        eventSource.on(event_types.GENERATION_STOPPED, injectHUD); // เพิ่มอันนี้
+        // เปลี่ยนไปใช้ triggerInjectHUD แทน injectHUD ตรงๆ
+        eventSource.on(event_types.CHAT_CHANGED, triggerInjectHUD);
+        eventSource.on(event_types.MESSAGE_RECEIVED, triggerInjectHUD);
+        eventSource.on(event_types.MESSAGE_SWIPED, triggerInjectHUD);
+        eventSource.on(event_types.MESSAGE_UPDATED, triggerInjectHUD);
+        eventSource.on(event_types.GENERATION_STOPPED, triggerInjectHUD);
 
         console.log(`[${extensionName}] ✅ Loaded successfully`);
     } catch (error) {
