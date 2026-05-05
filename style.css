@@ -1,1 +1,41 @@
+.hud-tracker-container {
+    border: 1px solid var(--SmartThemeBorderColor, #888);
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1));
+    overflow: hidden;
+}
 
+.hud-tracker-header {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--SmartThemeQuoteColor, rgba(255,255,255,0.05));
+    user-select: none;
+}
+
+.hud-tracker-header:hover {
+    background: var(--SmartThemeHoverColor, rgba(255,255,255,0.1));
+}
+
+.hud-tracker-content {
+    padding: 10px;
+    border-top: 1px solid var(--SmartThemeBorderColor, #888);
+}
+
+/* คลาสสำหรับซ่อนเนื้อหาเวลาพับเก็บ */
+.hud-tracker-content.collapsed {
+    display: none;
+}
+
+/* แอนิเมชันหมุนลูกศร */
+.hud-tracker-icon {
+    transition: transform 0.2s;
+}
+
+.hud-tracker-icon.collapsed {
+    transform: rotate(-90deg);
+}
