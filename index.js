@@ -173,6 +173,8 @@ jQuery(async () => {
         $("#hud_tracker_test_button").on("click", onButtonClick);
         $("#hud_tracker_header_template").on("input", onTemplateChange);
         $("#hud_tracker_content_template").on("input", onTemplateChange);
+        $("#hud_tracker_preset_select").on("change", onPresetChange);
+        $("#hud_tracker_save_preset").on("click", onSaveNewPreset);
 
         // เพิ่มส่วนนี้: ดักจับการคลิกที่ Header เพื่อพับ/กาง HUD
         $(document).on('click', '.hud-tracker-header', function() {
