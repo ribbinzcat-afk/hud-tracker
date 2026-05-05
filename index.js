@@ -162,6 +162,73 @@ function triggerInjectHUD() {
     setTimeout(injectHUD, 100);
 }
 
+// ฟังก์ชันลบ Preset
+function onDeletePreset() {
+    const current = extension_settings[extensionName].currentPreset;
+    if (current === "Default") {
+        toastr.warning("Cannot delete Default preset!");
+        return;
+    }
+    if (confirm(`Are you sure you want to delete preset '${current}'?`)) {
+        delete extension_settings[extensionName].presets[current];
+        extension_settings[extensionName].currentPreset = "Default";
+        saveSettingsDebounced();
+        updatePresetDropdown();
+        loadCurrentPresetToUI();
+        updateActiveHUDs();
+        toastr.success("Preset deleted!");
+    }
+}
+
+// ฟังก์ชันส่งออก (Export) เป็นไฟล์ JSON
+function onExportPreset() {
+    const current = extension_settings[extensionName].currentPreset;
+    const presetData = extension_settings[extensionName].presets[current];
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(presetData, null, 2));
+
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `hud_preset_${current}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+// ฟังก์ชันนำเข้า (Import) จากไฟล์ JSON
+function onImportPreset(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            if (importedData.headerTemplate !== undefined && importedData.contentTemplate !== undefined) {
+                let newName = file.name.replace('.json', '');
+                // ถ้าชื่อซ้ำ ให้เติมตัวเลขต่อท้าย
+                if (extension_settings[extensionName].presets[newName]) {
+                    newName = newName + "_" + Math.floor(Date.now() / 1000);
+                }
+
+                extension_settings[extensionName].presets[newName] = importedData;
+                extension_settings[extensionName].currentPreset = newName;
+                saveSettingsDebounced();
+                updatePresetDropdown();
+                loadCurrentPresetToUI();
+                updateActiveHUDs();
+                toastr.success(`Preset imported as '${newName}'`);
+            } else {
+                toastr.error("Invalid preset file format.");
+            }
+        } catch (err) {
+            toastr.error("Failed to parse JSON file.");
+        }
+        // ล้างค่า input file เพื่อให้ import ไฟล์เดิมซ้ำได้
+        $("#hud_tracker_import_file").val("");
+    };
+    reader.readAsText(file);
+}
+
 jQuery(async () => {
     console.log(`[${extensionName}] Loading...`);
 
@@ -175,6 +242,11 @@ jQuery(async () => {
         $("#hud_tracker_content_template").on("input", onTemplateChange);
         $("#hud_tracker_preset_select").on("change", onPresetChange);
         $("#hud_tracker_save_preset").on("click", onSaveNewPreset);
+        // เพิ่ม Event สำหรับปุ่มใหม่ 3 ปุ่ม
+        $("#hud_tracker_delete_preset").on("click", onDeletePreset);
+        $("#hud_tracker_export_preset").on("click", onExportPreset);
+        $("#hud_tracker_import_preset_btn").on("click", () => $("#hud_tracker_import_file").click());
+        $("#hud_tracker_import_file").on("change", onImportPreset);
 
         // เพิ่มส่วนนี้: ดักจับการคลิกที่ Header เพื่อพับ/กาง HUD
         $(document).on('click', '.hud-tracker-header', function() {
