@@ -5,14 +5,15 @@ import { saveSettingsDebounced, eventSource, event_types } from "../../../../scr
 const extensionName = "hud-tracker";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
-// 1. อัปเดตโครงสร้าง defaultSettings ใหม่
+// 1. อัปเดต defaultSettings ให้มี promptTemplate
 const defaultSettings = {
     enabled: false,
     currentPreset: "Default",
     presets: {
         "Default": {
             headerTemplate: "HUD Tracker",
-            contentTemplate: "Custom status goes here..."
+            contentTemplate: "Custom status goes here...",
+            promptTemplate: "" // เพิ่มอันนี้
         }
     }
 };
@@ -64,7 +65,7 @@ function updateActiveHUDs() {
     });
 }
 
-// 2. อัปเดต loadSettings เพื่อรองรับโครงสร้างใหม่
+// 2. อัปเดตฟังก์ชัน loadSettings เพื่อป้องกัน error จาก Preset เก่า
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
 
@@ -72,19 +73,25 @@ async function loadSettings() {
         Object.assign(extension_settings[extensionName], defaultSettings);
     }
 
-    // แปลงข้อมูลเก่า (ถ้ามี) ให้เข้ากับระบบ Preset
     if (!extension_settings[extensionName].presets) {
         extension_settings[extensionName].presets = {
             "Default": {
                 headerTemplate: extension_settings[extensionName].headerTemplate || "HUD Tracker",
-                contentTemplate: extension_settings[extensionName].contentTemplate || "Custom status goes here..."
+                contentTemplate: extension_settings[extensionName].contentTemplate || "Custom status goes here...",
+                promptTemplate: ""
             }
         };
         extension_settings[extensionName].currentPreset = "Default";
+    } else {
+        // อัปเดต Preset เก่าที่เคยสร้างไว้ให้มีช่อง promptTemplate
+        for (const key in extension_settings[extensionName].presets) {
+            if (extension_settings[extensionName].presets[key].promptTemplate === undefined) {
+                extension_settings[extensionName].presets[key].promptTemplate = "";
+            }
+        }
     }
 
     $("#hud_tracker_enabled").prop("checked", extension_settings[extensionName].enabled);
-
     updatePresetDropdown();
     loadCurrentPresetToUI();
 }
@@ -99,20 +106,26 @@ function updatePresetDropdown() {
     select.val(extension_settings[extensionName].currentPreset);
 }
 
+// 3. อัปเดตฟังก์ชัน loadCurrentPresetToUI
 function loadCurrentPresetToUI() {
     const current = extension_settings[extensionName].currentPreset;
     const preset = extension_settings[extensionName].presets[current];
     $("#hud_tracker_header_template").val(preset.headerTemplate);
     $("#hud_tracker_content_template").val(preset.contentTemplate);
+    $("#hud_tracker_prompt_template").val(preset.promptTemplate || ""); // เพิ่มอันนี้
 }
 
-function onPresetChange() {
-    extension_settings[extensionName].currentPreset = $("#hud_tracker_preset_select").val();
+// 5. อัปเดตฟังก์ชัน onTemplateChange
+function onTemplateChange() {
+    const current = extension_settings[extensionName].currentPreset;
+    extension_settings[extensionName].presets[current].headerTemplate = $("#hud_tracker_header_template").val();
+    extension_settings[extensionName].presets[current].contentTemplate = $("#hud_tracker_content_template").val();
+    extension_settings[extensionName].presets[current].promptTemplate = $("#hud_tracker_prompt_template").val(); // เพิ่มอันนี้
     saveSettingsDebounced();
-    loadCurrentPresetToUI();
-    updateActiveHUDs(); // อัปเดตหน้าจอ
+    updateActiveHUDs();
 }
 
+// 4. อัปเดตฟังก์ชัน onSaveNewPreset
 function onSaveNewPreset() {
     const newName = $("#hud_tracker_new_preset_name").val().trim();
     if (!newName) return;
@@ -121,10 +134,10 @@ function onSaveNewPreset() {
         return;
     }
 
-    // บันทึกค่าปัจจุบันลง Preset ใหม่
     extension_settings[extensionName].presets[newName] = {
         headerTemplate: $("#hud_tracker_header_template").val(),
-        contentTemplate: $("#hud_tracker_content_template").val()
+        contentTemplate: $("#hud_tracker_content_template").val(),
+        promptTemplate: $("#hud_tracker_prompt_template").val() // เพิ่มอันนี้
     };
     extension_settings[extensionName].currentPreset = newName;
     saveSettingsDebounced();
