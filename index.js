@@ -5,20 +5,26 @@ import { saveSettingsDebounced, eventSource, event_types } from "../../../../scr
 const extensionName = "hud-tracker";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
+// 1. อัปเดตโครงสร้าง defaultSettings ใหม่
 const defaultSettings = {
     enabled: false,
-    headerTemplate: "HUD Tracker",
-    contentTemplate: "Custom status goes here..."
+    currentPreset: "Default",
+    presets: {
+        "Default": {
+            headerTemplate: "HUD Tracker",
+            contentTemplate: "Custom status goes here..."
+        }
+    }
 };
 
-
-// 2. อัปเดตฟังก์ชัน injectHUD เพื่อใช้ข้อความจากการตั้งค่า
+// 5. อัปเดต injectHUD ให้ดึงข้อมูลจาก Preset ปัจจุบัน
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
 
-    // ดึงข้อความมาใช้ (แปลงการขึ้นบรรทัดใหม่ใน textarea ให้เป็น <br> ใน HTML)
-    const headerText = extension_settings[extensionName].headerTemplate || "HUD Tracker";
-    const contentText = (extension_settings[extensionName].contentTemplate || "").replace(/\n/g, '<br>');
+    const current = extension_settings[extensionName].currentPreset;
+    const preset = extension_settings[extensionName].presets[current];
+    const headerText = preset.headerTemplate || "HUD Tracker";
+    const contentText = (preset.contentTemplate || "").replace(/\n/g, '<br>');
 
     $('.mes[is_user="false"] .mes_block').each(function() {
         if ($(this).find('.hud-tracker-container').length === 0) {
@@ -37,21 +43,28 @@ function injectHUD() {
     });
 }
 
-// 3. เพิ่มฟังก์ชันสำหรับบันทึก Template
+// 4. อัปเดต onTemplateChange ให้บันทึกลง Preset ปัจจุบัน
 function onTemplateChange() {
-    extension_settings[extensionName].headerTemplate = $("#hud_tracker_header_template").val();
-    extension_settings[extensionName].contentTemplate = $("#hud_tracker_content_template").val();
+    const current = extension_settings[extensionName].currentPreset;
+    extension_settings[extensionName].presets[current].headerTemplate = $("#hud_tracker_header_template").val();
+    extension_settings[extensionName].presets[current].contentTemplate = $("#hud_tracker_content_template").val();
     saveSettingsDebounced();
-    console.log(`[${extensionName}] Templates saved`);
+    updateActiveHUDs();
+}
 
-    // อัปเดต HUD ที่แสดงอยู่บนหน้าจอทันที
+function updateActiveHUDs() {
+    const current = extension_settings[extensionName].currentPreset;
+    const preset = extension_settings[extensionName].presets[current];
+    const headerText = preset.headerTemplate || "HUD Tracker";
+    const contentText = (preset.contentTemplate || "").replace(/\n/g, '<br>');
+
     $('.hud-tracker-container').each(function() {
-        $(this).find('.hud-tracker-header-text').text(extension_settings[extensionName].headerTemplate);
-        $(this).find('.hud-tracker-content').html(extension_settings[extensionName].contentTemplate.replace(/\n/g, '<br>'));
+        $(this).find('.hud-tracker-header-text').text(headerText);
+        $(this).find('.hud-tracker-content').html(contentText);
     });
 }
 
-// 4. อัปเดตฟังก์ชัน loadSettings เพื่อโหลดข้อมูลลงในช่อง
+// 2. อัปเดต loadSettings เพื่อรองรับโครงสร้างใหม่
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
 
@@ -59,9 +72,66 @@ async function loadSettings() {
         Object.assign(extension_settings[extensionName], defaultSettings);
     }
 
+    // แปลงข้อมูลเก่า (ถ้ามี) ให้เข้ากับระบบ Preset
+    if (!extension_settings[extensionName].presets) {
+        extension_settings[extensionName].presets = {
+            "Default": {
+                headerTemplate: extension_settings[extensionName].headerTemplate || "HUD Tracker",
+                contentTemplate: extension_settings[extensionName].contentTemplate || "Custom status goes here..."
+            }
+        };
+        extension_settings[extensionName].currentPreset = "Default";
+    }
+
     $("#hud_tracker_enabled").prop("checked", extension_settings[extensionName].enabled);
-    $("#hud_tracker_header_template").val(extension_settings[extensionName].headerTemplate);
-    $("#hud_tracker_content_template").val(extension_settings[extensionName].contentTemplate);
+
+    updatePresetDropdown();
+    loadCurrentPresetToUI();
+}
+
+// 3. ฟังก์ชันใหม่สำหรับจัดการ Preset
+function updatePresetDropdown() {
+    const select = $("#hud_tracker_preset_select");
+    select.empty();
+    for (const presetName in extension_settings[extensionName].presets) {
+        select.append(`<option value="${presetName}">${presetName}</option>`);
+    }
+    select.val(extension_settings[extensionName].currentPreset);
+}
+
+function loadCurrentPresetToUI() {
+    const current = extension_settings[extensionName].currentPreset;
+    const preset = extension_settings[extensionName].presets[current];
+    $("#hud_tracker_header_template").val(preset.headerTemplate);
+    $("#hud_tracker_content_template").val(preset.contentTemplate);
+}
+
+function onPresetChange() {
+    extension_settings[extensionName].currentPreset = $("#hud_tracker_preset_select").val();
+    saveSettingsDebounced();
+    loadCurrentPresetToUI();
+    updateActiveHUDs(); // อัปเดตหน้าจอ
+}
+
+function onSaveNewPreset() {
+    const newName = $("#hud_tracker_new_preset_name").val().trim();
+    if (!newName) return;
+    if (extension_settings[extensionName].presets[newName]) {
+        toastr.warning("Preset name already exists!");
+        return;
+    }
+
+    // บันทึกค่าปัจจุบันลง Preset ใหม่
+    extension_settings[extensionName].presets[newName] = {
+        headerTemplate: $("#hud_tracker_header_template").val(),
+        contentTemplate: $("#hud_tracker_content_template").val()
+    };
+    extension_settings[extensionName].currentPreset = newName;
+    saveSettingsDebounced();
+
+    $("#hud_tracker_new_preset_name").val("");
+    updatePresetDropdown();
+    toastr.success(`Preset '${newName}' saved!`);
 }
 
 function onCheckboxChange(event) {
