@@ -9,17 +9,18 @@ const defaultSettings = {
     enabled: false
 };
 
-// ฟังก์ชันใหม่สำหรับแทรก HUD
 function injectHUD() {
     if (!extension_settings[extensionName].enabled) return;
 
     // หาข้อความของ AI ทั้งหมด (is_user="false") ที่ยังไม่มี HUD
     $('.mes[is_user="false"] .mes_text').each(function() {
         if ($(this).find('.hud-tracker-container').length === 0) {
-            $(this).append(`
-                <div class="hud-tracker-container" style="border: 1px solid #888; padding: 10px; margin-top: 10px; border-radius: 5px; background: rgba(0,0,0,0.1);">
+            // เปลี่ยนจาก append เป็น prepend เพื่อให้ไปอยู่ด้านบนสุด
+            // และเปลี่ยน margin-top เป็น margin-bottom เพื่อเว้นระยะจากข้อความด้านล่าง
+            $(this).prepend(`
+                <div class="hud-tracker-container" style="border: 1px solid #888; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: rgba(0,0,0,0.1);">
                     <b>HUD Tracker</b>
-                    <p>✅ HUD injection is working!</p>
+                    <p>✅ HUD injection is working at the top!</p>
                 </div>
             `);
         }
@@ -75,6 +76,8 @@ jQuery(async () => {
         eventSource.on(event_types.CHAT_CHANGED, injectHUD);
         eventSource.on(event_types.MESSAGE_RECEIVED, injectHUD);
         eventSource.on(event_types.MESSAGE_SWIPED, injectHUD);
+        eventSource.on(event_types.MESSAGE_UPDATED, injectHUD); // เพิ่มอันนี้
+        eventSource.on(event_types.GENERATION_STOPPED, injectHUD); // เพิ่มอันนี้
 
         console.log(`[${extensionName}] ✅ Loaded successfully`);
     } catch (error) {
