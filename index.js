@@ -44,11 +44,12 @@ function injectHUD() {
     });
 }
 
-// 4. อัปเดต onTemplateChange ให้บันทึกลง Preset ปัจจุบัน
+// 5. อัปเดตฟังก์ชัน onTemplateChange
 function onTemplateChange() {
     const current = extension_settings[extensionName].currentPreset;
     extension_settings[extensionName].presets[current].headerTemplate = $("#hud_tracker_header_template").val();
     extension_settings[extensionName].presets[current].contentTemplate = $("#hud_tracker_content_template").val();
+    extension_settings[extensionName].presets[current].promptTemplate = $("#hud_tracker_prompt_template").val(); // เพิ่มอันนี้
     saveSettingsDebounced();
     updateActiveHUDs();
 }
@@ -115,14 +116,11 @@ function loadCurrentPresetToUI() {
     $("#hud_tracker_prompt_template").val(preset.promptTemplate || ""); // เพิ่มอันนี้
 }
 
-// 5. อัปเดตฟังก์ชัน onTemplateChange
-function onTemplateChange() {
-    const current = extension_settings[extensionName].currentPreset;
-    extension_settings[extensionName].presets[current].headerTemplate = $("#hud_tracker_header_template").val();
-    extension_settings[extensionName].presets[current].contentTemplate = $("#hud_tracker_content_template").val();
-    extension_settings[extensionName].presets[current].promptTemplate = $("#hud_tracker_prompt_template").val(); // เพิ่มอันนี้
+function onPresetChange() {
+    extension_settings[extensionName].currentPreset = $("#hud_tracker_preset_select").val();
     saveSettingsDebounced();
-    updateActiveHUDs();
+    loadCurrentPresetToUI();
+    updateActiveHUDs(); // อัปเดตหน้าจอ
 }
 
 // 4. อัปเดตฟังก์ชัน onSaveNewPreset
