@@ -12,6 +12,19 @@
 
             <hr>
 
+            <!-- เพิ่มส่วนจัดการ Preset ตรงนี้ -->
+            <div id="hud_tracker_preset_container" style="margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                <label><b>Preset:</b></label>
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <select id="hud_tracker_preset_select" class="text_pole" style="flex-grow: 1;"></select>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <input id="hud_tracker_new_preset_name" type="text" class="text_pole" placeholder="New preset name" style="flex-grow: 1;" />
+                    <div id="hud_tracker_save_preset" class="menu_button fa-solid fa-save" title="Save as New Preset" style="margin: 0; display: flex; align-items: center; justify-content: center; width: 40px;"></div>
+                </div>
+            </div>
+            <!-- สิ้นสุดส่วนจัดการ Preset -->
+            
             <!-- เพิ่มส่วนนี้สำหรับการ Custom ข้อความ -->
             <div>
                 <label for="hud_tracker_header_template"><b>ส่วนที่แสดงผลตลอด (Header):</b></label>
